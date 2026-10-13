@@ -165,8 +165,26 @@ public class CommandList extends PartiesSubCommand {
 		}
 		
 		// Command starts
+		Set<PartyImpl> onlineParties = null;
+		if (orderBy == PartiesDatabaseManager.ListOrder.ONLINE_MEMBERS) {
+			onlineParties = new TreeSet<>(Comparator
+					.comparing(p -> ((PartyImpl) p).getOnlineMembers(false).size())
+					.reversed()
+					.thenComparing(p -> ((PartyImpl) p).getName())
+					.thenComparing(p -> ((PartyImpl) p).getId()));
+			
+			for (PartyImpl party : getPlugin().getPartyManager().getCacheParties().values()) {
+				if (party.getName() != null
+						&& !ConfigParties.ADDITIONAL_LIST_HIDDENPARTIES.contains(party.getName())
+						&& !ConfigParties.ADDITIONAL_LIST_HIDDENPARTIES.contains(party.getId().toString())
+						&& !party.getOnlineMembers(false).isEmpty()) {
+					onlineParties.add(party);
+				}
+			}
+		}
+		
 		int numberPlayers = Math.min(
-				orderBy == PartiesDatabaseManager.ListOrder.ONLINE_MEMBERS ? getPlugin().getPartyManager().getCacheParties().size() : getPlugin().getDatabaseManager().getListPartiesNumber(),
+				onlineParties != null ? onlineParties.size() : getPlugin().getDatabaseManager().getListPartiesNumber(),
 				ConfigParties.ADDITIONAL_LIST_LIMITPARTIES);
 		int limit = Math.max(1, ConfigParties.ADDITIONAL_LIST_PERPAGE);
 		
@@ -183,19 +201,7 @@ public class CommandList extends PartiesSubCommand {
 		
 		int offset = selectedPage > 1 ? limit * (selectedPage - 1) : 0;
 		LinkedHashSet<Pair<Integer, PartyImpl>> parties = new LinkedHashSet<>();
-		if (orderBy == PartiesDatabaseManager.ListOrder.ONLINE_MEMBERS) {
-			Set<PartyImpl> onlineParties = new TreeSet<>(Comparator
-					.comparing(p -> ((PartyImpl) p).getOnlineMembers(false).size())
-					.reversed()
-					.thenComparing(p -> ((PartyImpl) p).getName())
-					.thenComparing(p -> ((PartyImpl) p).getId()));
-			
-			getPlugin().getPartyManager().getCacheParties().values().forEach((party) -> {
-				if (party.getName() != null && !ConfigParties.ADDITIONAL_LIST_HIDDENPARTIES.contains(party.getName()) && !ConfigParties.ADDITIONAL_LIST_HIDDENPARTIES.contains(party.getId().toString())) {
-					onlineParties.add(party);
-				}
-			});
-			
+		if (onlineParties != null) {
 			// Limit and offset
 			Iterator<PartyImpl> iterator = onlineParties.iterator();
 			int n = 0;

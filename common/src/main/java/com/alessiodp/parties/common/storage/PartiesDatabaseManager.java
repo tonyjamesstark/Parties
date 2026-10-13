@@ -119,7 +119,9 @@ public class PartiesDatabaseManager extends DatabaseManager {
 			plugin.getLoggerManager().logDebug(PartiesConstants.DEBUG_DB_GETALLPARTIES, true);
 			
 			if (order == ListOrder.ONLINE_MEMBERS) {
-				return ((PartiesPlugin) plugin).getPartyManager().getCacheParties().values().stream().sorted(Comparator
+				return ((PartiesPlugin) plugin).getPartyManager().getCacheParties().values().stream()
+						.filter(p -> !p.getOnlineMembers(false).isEmpty())
+						.sorted(Comparator
 								.comparing(p -> ((PartyImpl) p).getOnlineMembers(false).size())
 								.reversed()
 								.thenComparing(p -> ((PartyImpl) p).getName())
